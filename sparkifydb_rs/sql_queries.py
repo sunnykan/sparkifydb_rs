@@ -1,6 +1,5 @@
 import configparser
 
-
 # CONFIG
 config = configparser.ConfigParser()
 config.read("dwh.cfg")
@@ -54,7 +53,7 @@ staging_songs_table_create = """create table staging_songs (
 """
 
 songplay_table_create = """create table songplays (
-    songplay_id double precision DEFAULT nextval('songplay_seq') not null,
+    songplay_id integer not null identity(0, 1),
     user_id integer not null,
     song_id varchar,
     artist_id varchar,
@@ -81,7 +80,7 @@ user_table_create = """create table users (
     last_name varchar,
     gender varchar,
     level text,
-    primary key (user_id);
+    primary key (user_id)
 )
 """
 
@@ -91,7 +90,7 @@ song_table_create = """create table songs (
     title varchar,
     year integer,
     duration double precision,
-    primary key (song_id);
+    primary key (song_id)
 )
 """
 
@@ -101,7 +100,7 @@ artist_table_create = """create table artists (
     location varchar,
     latitude double precision,
     longitude double precision,
-    primary key (artist_id);
+    primary key (artist_id)
 )
 """
 
@@ -113,14 +112,17 @@ time_table_create = """create table time (
     month smallint,
     year smallint,
     weekday smallint,
-    primary key (start_time);
+    primary key (start_time)
 )
 """
 
 # STAGING TABLES
 
+
 staging_events_copy = f"""copy staging_events from {config.get("S3", "LOG_DATA")} 
-credentials 'aws_iam_role={config.get("IAM_ROLE", "ARN")}' json {config.get("S3", "LOG_JSONPATH")} region 'us-west-2';"""
+credentials 'aws_iam_role={config.get("IAM_ROLE", "ARN")}' 
+json {config.get("S3", "LOG_JSONPATH")} 
+region 'us-west-2';"""
 
 
 staging_songs_copy = f"""copy staging_songs from {config.get("S3", "SONG_DATA")} 
@@ -145,7 +147,7 @@ songplay_table_insert = """insert into songplays (user_id,
         e.location, 
         e.userAgent
     from staging_events e
-    left join staging_songs s
+    join staging_songs s
     on s.title = e.song 
         and s.artist_id = e.artist
             and round(s.duration) = round(e.length)
@@ -160,7 +162,7 @@ user_table_insert = """insert into users (user_id, first_name, last_name, gender
                     level
     from staging_events
     where page = 'NextSong'
-    and user_id NOT IN (select distinct user_id FROM users);
+    and userId NOT IN (select distinct user_id FROM users);
 """
 
 song_table_insert = """insert into songs (song_id, title, artist_id, year, duration)
@@ -180,11 +182,11 @@ time_table_insert = """insert into time(start_time, hour, day, week, month, year
             extract(day from t.ts) as day,
             extract(week from t.ts) as week,
             extract(month from t.ts) as month,
-            extract(isoyear from t.ts) as year,
-            extract(isodow from t.ts) as weekday
+            extract(year from t.ts) as year,
+            extract(dow from t.ts) as weekday
     from (
-        select start_time, TIMESTAMP 'epoch' + start_time/1000 * INTERVAL '1 second' ts 
-        from songplays       
+        select distinct start_time, TIMESTAMP 'epoch' + start_time/1000 * INTERVAL '1 second' as ts
+        from songplays
     ) t;
 """
 
@@ -193,11 +195,11 @@ time_table_insert = """insert into time(start_time, hour, day, week, month, year
 create_table_queries = [
     staging_events_table_create,
     staging_songs_table_create,
-    songplay_table_create,
     user_table_create,
     song_table_create,
     artist_table_create,
     time_table_create,
+    songplay_table_create,
 ]
 drop_table_queries = [
     staging_events_table_drop,
