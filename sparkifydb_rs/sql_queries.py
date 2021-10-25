@@ -6,13 +6,13 @@ config.read("dwh.cfg")
 
 # DROP TABLES
 
-staging_events_table_drop = ""
+staging_events_table_drop = "drop table if exists staging_events"
 staging_songs_table_drop = "drop table if exists staging_songs"
-songplay_table_drop = ""
-user_table_drop = ""
-song_table_drop = ""
-artist_table_drop = ""
-time_table_drop = ""
+songplay_table_drop = "drop table if exists songplays"
+user_table_drop = "drop table if exists users"
+song_table_drop = "drop table if exists songs"
+artist_table_drop = "drop table if exists artists"
+time_table_drop = "drop table if exists time"
 
 # CREATE TABLES
 
@@ -43,8 +43,8 @@ staging_songs_table_create = """create table staging_songs (
     artist_id varchar,
     artist_latitude double precision,
     artist_longitude double precision,
-    artist_location varchar,
-    artist_name varchar,
+    artist_location varchar(max),
+    artist_name varchar(max),
     song_id varchar,
     title varchar,
     duration double precision,
@@ -96,8 +96,8 @@ song_table_create = """create table songs (
 
 artist_table_create = """create table artists (
     artist_id varchar not null,
-    name varchar,
-    location varchar,
+    name varchar(max),
+    location varchar(max),
     latitude double precision,
     longitude double precision,
     primary key (artist_id)
@@ -149,7 +149,7 @@ songplay_table_insert = """insert into songplays (user_id,
     from staging_events e
     join staging_songs s
     on s.title = e.song 
-        and s.artist_id = e.artist
+        and s.artist_name = e.artist
             and round(s.duration) = round(e.length)
     where page = 'NextSong';
 """
@@ -211,6 +211,7 @@ drop_table_queries = [
     time_table_drop,
 ]
 copy_table_queries = [staging_events_copy, staging_songs_copy]
+
 insert_table_queries = [
     songplay_table_insert,
     user_table_insert,

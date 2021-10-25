@@ -59,6 +59,7 @@ def create_clients():
 
 
 def create_role(iam):
+    print("Creating role...")
     try:
         print("1.1 Creating a new IAM Role")
         dwhRole = iam.create_role(
@@ -95,6 +96,7 @@ def create_role(iam):
 
 
 def delete_role(iam):
+    print("Deleting role...")
     iam.detach_role_policy(
         RoleName=DWH_IAM_ROLE_NAME,
         PolicyArn="arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess",
@@ -103,6 +105,7 @@ def delete_role(iam):
 
 
 def delete_cluster(redshift):
+    print("Deleting cluster...")
     try:
         redshift.delete_cluster(
             ClusterIdentifier=DWH_CLUSTER_IDENTIFIER, SkipFinalClusterSnapshot=True
@@ -117,6 +120,7 @@ def delete_cluster(redshift):
 
 
 def create_cluster(redshift, roleArn):
+    print("Creating cluster...")
     try:
         response = redshift.create_cluster(
             # HW
@@ -169,17 +173,19 @@ def _open_tcp_port(ec2, myClusterProps):
 def connect_cluster():
 
     ec2, s3, iam, redshift = create_clients()
+    if iam.get_role(RoleName=DWH_IAM_ROLE_NAME):
+        delete_role(iam)
     roleArn = create_role(iam)
 
+    myClusterProps = create_cluster(redshift, roleArn)
+    DWH_ENDPOINT = myClusterProps["Endpoint"]["Address"]
+    DWH_ROLE_ARN = myClusterProps["IamRoles"][0]["IamRoleArn"]
 
-myClusterProps = create_cluster(redshift, roleArn)
-DWH_ENDPOINT = myClusterProps["Endpoint"]["Address"]
-DWH_ROLE_ARN = myClusterProps["IamRoles"][0]["IamRoleArn"]
+    if not myClusterProps["PubliclyAccessible"]:
+        _open_tcp_port(ec2, myClusterProps)
 
-if not myClusterProps["PubliclyAccessible"]:
-    _open_tcp_port(ec2, myClusterProps)
-
-print(f"endpoint: {DWH_ENDPOINT}, role_arn: {DWH_ROLE_ARN}")
+    print(f"endpoint: {DWH_ENDPOINT}, role_arn: {DWH_ROLE_ARN}")
+    print("Cluster is ready!")
 
 
 def clean_up():
