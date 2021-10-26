@@ -159,4 +159,4 @@ cython_debug/
 .env
 
 # config
-*.cfg
+# *.cfg

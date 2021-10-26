@@ -46,7 +46,7 @@ staging_songs_table_create = """create table staging_songs (
     artist_location varchar(max),
     artist_name varchar(max),
     song_id varchar,
-    title varchar,
+    title varchar(max),
     duration double precision,
     year integer
 );
@@ -87,7 +87,7 @@ user_table_create = """create table users (
 song_table_create = """create table songs (
     song_id varchar not null,
     artist_id varchar not null,
-    title varchar,
+    title varchar(max),
     year integer,
     duration double precision,
     primary key (song_id)

@@ -18,22 +18,22 @@ def insert_tables(cur, conn):
 
 
 def main():
-    config = configparser.ConfigParser()
-    config.read("dwh.cfg")
+config = configparser.ConfigParser()
+config.read("dwh.cfg")
 
-    host, dbname, user, password, port = (
-        config.get("DWH", "DWH_HOST"),
-        config.get("DWH", "DWH_DB"),
-        config.get("DWH", "DWH_DB_USER"),
-        config.get("DWH", "DWH_DB_PASSWORD"),
-        config.get("DWH", "DWH_PORT"),
-    )
+host, dbname, user, password, port = (
+    config.get("DWH", "DWH_HOST"),
+    config.get("DWH", "DWH_DB"),
+    config.get("DWH", "DWH_DB_USER"),
+    config.get("DWH", "DWH_DB_PASSWORD"),
+    config.get("DWH", "DWH_PORT"),
+)
 
-    param_string = (
-        f"host={host} dbname={dbname} user={user} password={password} port={port}"
-    )
-    conn = psycopg2.connect(param_string)
-    cur = conn.cursor()
+param_string = (
+    f"host={host} dbname={dbname} user={user} password={password} port={port}"
+)
+conn = psycopg2.connect(param_string)
+cur = conn.cursor()
 
     load_staging_tables(cur, conn)
     insert_tables(cur, conn)
